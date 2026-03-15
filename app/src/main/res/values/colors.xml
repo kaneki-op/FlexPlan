@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SPLASH SCREEN COLORS (Preserved) -->
+    <color name="splash_primary">#7C4DFF</color>
+    <color name="splash_secondary">#00E5FF</color>
+    <color name="splash_grad_start">#0B0E14</color>
+    <color name="splash_grad_center">#151921</color>
+    <color name="splash_grad_end">#1E1B4B</color>
+
+    <!-- THEME: Reverting to the "Good" Screenshot colors -->
+    <color name="theme_bg">#210B2C</color> <!-- Main Dark Background -->
+    <color name="theme_box_bg">#2D132C</color> <!-- Dark Purple for boxes (as in image) -->
+    <color name="theme_accent">#FFD166</color> <!-- Sunglow Yellow -->
+    <color name="wisteria">#BC96E6</color> <!-- Lavender for logo/minor text -->
+
+    <!-- Unified Contrast -->
+    <color name="text_white">#FFFFFF</color>
+    <color name="text_gray">#A9ABB3</color>
+    <color name="progress_track">#33FFFFFF</color> <!-- High-contrast track for circle -->
+
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="success_green">#32D74B</color>
+    <color name="error_red">#FF453A</color>
+
+    <!-- Compatibility Aliases -->
+    <color name="primary_color">@color/wisteria</color>
+    <color name="primary_variant">#8E74BA</color>
+    <color name="secondary_color">@color/theme_accent</color>
+    <color name="surface_dark">@color/theme_box_bg</color>
+    <color name="theme_surface">@color/theme_box_bg</color>
+    <color name="theme_primary">@color/wisteria</color>
+
+    <!-- Navigation -->
+    <color name="nav_item_selected">@color/theme_accent</color>
+    <color name="nav_item_unselected">#80FFFFFF</color>
+
+    <!-- Splash compatibility -->
+    <color name="gradient_start">@color/splash_grad_start</color>
+    <color name="gradient_center">@color/splash_grad_center</color>
+    <color name="gradient_end">@color/splash_grad_end</color>
+</resources>
