@@ -86,51 +86,31 @@
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipAll"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
+                style="@style/CustomChipStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="All"
-                android:textColor="@color/white"
-                app:chipBackgroundColor="@color/theme_surface"
-                app:checkedIconVisible="false"
-                app:chipStrokeColor="@color/theme_primary"
-                app:chipStrokeWidth="1dp" />
+                android:text="All" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipToday"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
+                style="@style/CustomChipStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Today"
-                android:textColor="@color/white"
-                app:chipBackgroundColor="@color/theme_surface"
-                app:checkedIconVisible="false"
-                app:chipStrokeColor="@color/theme_primary"
-                app:chipStrokeWidth="1dp" />
+                android:text="Today" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipCompleted"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
+                style="@style/CustomChipStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Completed"
-                android:textColor="@color/white"
-                app:chipBackgroundColor="@color/theme_surface"
-                app:checkedIconVisible="false"
-                app:chipStrokeColor="@color/theme_primary"
-                app:chipStrokeWidth="1dp" />
+                android:text="Completed" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipPending"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
+                style="@style/CustomChipStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pending"
-                android:textColor="@color/white"
-                app:chipBackgroundColor="@color/theme_surface"
-                app:checkedIconVisible="false"
-                app:chipStrokeColor="@color/theme_primary"
-                app:chipStrokeWidth="1dp" />
+                android:text="Pending" />
 
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>

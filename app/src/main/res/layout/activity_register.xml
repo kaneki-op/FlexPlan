@@ -61,13 +61,15 @@
                     android:padding="24dp">
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilName"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Full Name"
                         android:textColorHint="@color/text_gray"
                         app:boxStrokeColor="@color/theme_primary"
-                        app:hintTextColor="@color/theme_accent">
+                        app:hintTextColor="@color/theme_accent"
+                        app:errorEnabled="true">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etName"
@@ -78,14 +80,16 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilEmail"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="8dp"
                         android:hint="Email Address"
                         android:textColorHint="@color/text_gray"
                         app:boxStrokeColor="@color/theme_primary"
-                        app:hintTextColor="@color/theme_accent">
+                        app:hintTextColor="@color/theme_accent"
+                        app:errorEnabled="true">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etEmail"
@@ -96,16 +100,18 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPassword"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="8dp"
                         android:hint="Password"
                         android:textColorHint="@color/text_gray"
                         app:boxStrokeColor="@color/theme_primary"
                         app:endIconMode="password_toggle"
                         app:endIconTint="@color/text_gray"
-                        app:hintTextColor="@color/theme_accent">
+                        app:hintTextColor="@color/theme_accent"
+                        app:errorEnabled="true">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etPassword"
@@ -116,16 +122,18 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilConfirmPassword"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="8dp"
                         android:hint="Confirm Password"
                         android:textColorHint="@color/text_gray"
                         app:boxStrokeColor="@color/theme_primary"
                         app:endIconMode="password_toggle"
                         app:endIconTint="@color/text_gray"
-                        app:hintTextColor="@color/theme_accent">
+                        app:hintTextColor="@color/theme_accent"
+                        app:errorEnabled="true">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etConfirmPassword"
@@ -139,7 +147,7 @@
                         android:id="@+id/btnRegister"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
-                        android:layout_marginTop="32dp"
+                        android:layout_marginTop="16dp"
                         android:backgroundTint="@color/theme_primary"
                         android:text="Create Account"
                         android:textAllCaps="false"

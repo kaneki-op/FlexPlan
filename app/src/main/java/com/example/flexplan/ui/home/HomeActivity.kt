@@ -24,15 +24,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.flexplan.R
 import com.example.flexplan.adapter.TaskAdapter
 import com.example.flexplan.data.DatabaseHelper
+import com.example.flexplan.model.Task
 import com.example.flexplan.ui.analytics.AnalyticsActivity
 import com.example.flexplan.ui.profile.ProfileActivity
 import com.example.flexplan.ui.tasks.TasksActivity
 import com.example.flexplan.utils.FlexPlanAnalyzer
+import com.example.flexplan.utils.PrefsManager
 import com.example.flexplan.utils.TaskNotificationManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.snackbar.Snackbar
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,6 +44,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var db: DatabaseHelper
     private lateinit var taskAdapter: TaskAdapter
     private lateinit var analyzer: FlexPlanAnalyzer
+    private lateinit var prefsManager: PrefsManager
     
     private var userEmail: String = ""
     private var currentUserId: Int = -1
@@ -52,6 +56,9 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var rvTasks: RecyclerView
     private lateinit var cardOptimization: MaterialCardView
     private lateinit var btnCloseOptimization: ImageButton
+
+    // For Undo Functionality
+    private var lastShiftedTasks: List<Pair<Int, String>>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +74,7 @@ class HomeActivity : AppCompatActivity() {
 
         db = DatabaseHelper(this)
         analyzer = FlexPlanAnalyzer(db)
+        prefsManager = PrefsManager(this)
 
         requestAppPermissions()
 
@@ -80,7 +88,7 @@ class HomeActivity : AppCompatActivity() {
         val fabAddTask = findViewById<FloatingActionButton>(R.id.fabAddTask)
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
-        userEmail = intent.getStringExtra("USER_EMAIL") ?: "guest@flexplan.com"
+        userEmail = intent.getStringExtra("USER_EMAIL") ?: prefsManager.getUserEmail() ?: "guest@flexplan.com"
         isGuest = (userEmail == "guest@flexplan.com")
         val user = db.getUserByEmail(userEmail)
         currentUserId = user?.id ?: -1
@@ -112,15 +120,7 @@ class HomeActivity : AppCompatActivity() {
                                 db.updateTaskCompletion(task.id!!, newStatus, nowStr, delay.toInt())
                                 
                                 if (delay > 5) {
-                                    AlertDialog.Builder(ContextThemeWrapper(this, R.style.CustomDialogTheme))
-                                        .setTitle("FlexPlan Adjustment")
-                                        .setMessage("You finished $delay minutes late. Would you like to shift your future schedule?")
-                                        .setPositiveButton("Adjust Schedule") { _, _ ->
-                                            db.shiftFutureTasks(currentUserId, task.time, delay.toInt())
-                                            refreshData()
-                                        }
-                                        .setNegativeButton("Keep Original", null)
-                                        .show()
+                                    showAdjustmentDialog(task.time, delay.toInt())
                                 }
                             }
                         } catch (e: Exception) {
@@ -153,9 +153,9 @@ class HomeActivity : AppCompatActivity() {
         refreshData()
 
         btnCloseOptimization.setOnClickListener {
-            val prefs = getSharedPreferences("FlexPlanPrefs", Context.MODE_PRIVATE)
+            val sharedPrefs = getSharedPreferences("FlexPlanPrefs", Context.MODE_PRIVATE)
             val todayDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
-            prefs.edit().putString("DismissedOptimization", todayDate).apply()
+            sharedPrefs.edit().putString("DismissedOptimization", todayDate).apply()
             cardOptimization.visibility = View.GONE
         }
 
@@ -188,6 +188,44 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    private fun showAdjustmentDialog(fromTime: String, delay: Int) {
+        AlertDialog.Builder(ContextThemeWrapper(this, R.style.CustomDialogTheme))
+            .setTitle("FlexPlan Adjustment")
+            .setMessage("You finished $delay minutes late. Would you like to shift your future schedule?")
+            .setPositiveButton("Adjust Schedule") { _, _ ->
+                saveCurrentStateForUndo()
+                db.shiftFutureTasks(currentUserId, fromTime, delay)
+                refreshData()
+                showUndoSnackbar()
+            }
+            .setNegativeButton("Keep Original", null)
+            .show()
+    }
+
+    private fun saveCurrentStateForUndo() {
+        val tasks = db.getTasksByUserId(currentUserId)
+        lastShiftedTasks = tasks.map { it.id!! to it.time }
+    }
+
+    private fun showUndoSnackbar() {
+        val view = findViewById<View>(R.id.fabAddTask) // Anchor for snackbar
+        Snackbar.make(view, "Schedule Adjusted", Snackbar.LENGTH_LONG)
+            .setAction("UNDO") {
+                undoLastShift()
+            }
+            .setActionTextColor(Color.parseColor("#FFD166")) // theme_accent
+            .show()
+    }
+
+    private fun undoLastShift() {
+        lastShiftedTasks?.forEach { (taskId, originalTime) ->
+            db.updateTaskTime(taskId, originalTime, 0)
+        }
+        lastShiftedTasks = null
+        refreshData()
+        Toast.makeText(this, "Adjustment Undone", Toast.LENGTH_SHORT).show()
+    }
+
     private fun requestAppPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -206,17 +244,17 @@ class HomeActivity : AppCompatActivity() {
 
     private fun refreshData() {
         if (!isGuest && currentUserId != -1) {
-            val prefs = getSharedPreferences("FlexPlanPrefs", Context.MODE_PRIVATE)
+            val sharedPrefs = getSharedPreferences("FlexPlanPrefs", Context.MODE_PRIVATE)
             val todayDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
-            val lastOptimizationDate = prefs.getString("LastOptimization", "")
-            val dismissedDate = prefs.getString("DismissedOptimization", "")
+            val lastOptimizationDate = sharedPrefs.getString("LastOptimization", "")
+            val dismissedDate = sharedPrefs.getString("DismissedOptimization", "")
 
             val wasAdjusted = analyzer.analyzeAndAdjust(currentUserId)
             
             if ((wasAdjusted || lastOptimizationDate == todayDate) && dismissedDate != todayDate) {
                 cardOptimization.visibility = View.VISIBLE
                 if (wasAdjusted) {
-                    prefs.edit().putString("LastOptimization", todayDate).apply()
+                    sharedPrefs.edit().putString("LastOptimization", todayDate).apply()
                 }
             } else {
                 cardOptimization.visibility = View.GONE

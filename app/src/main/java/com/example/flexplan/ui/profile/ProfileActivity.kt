@@ -1,6 +1,5 @@
 package com.example.flexplan.ui.profile
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -21,11 +20,13 @@ import com.example.flexplan.ui.analytics.AnalyticsActivity
 import com.example.flexplan.ui.auth.LoginActivity
 import com.example.flexplan.ui.home.HomeActivity
 import com.example.flexplan.ui.tasks.TasksActivity
+import com.example.flexplan.utils.PrefsManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class ProfileActivity : AppCompatActivity() {
 
     private lateinit var db: DatabaseHelper
+    private lateinit var prefsManager: PrefsManager
     private var userEmail: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +42,8 @@ class ProfileActivity : AppCompatActivity() {
         setContentView(R.layout.activity_profile)
 
         db = DatabaseHelper(this)
-        userEmail = intent.getStringExtra("USER_EMAIL") ?: "guest@flexplan.com"
+        prefsManager = PrefsManager(this)
+        userEmail = intent.getStringExtra("USER_EMAIL") ?: prefsManager.getUserEmail() ?: "guest@flexplan.com"
 
         // UI References
         val tvDisplayName = findViewById<TextView>(R.id.tvDisplayName)
@@ -137,8 +139,7 @@ class ProfileActivity : AppCompatActivity() {
 
         // 4. Logout Logic
         btnLogout.setOnClickListener {
-            val prefs = getSharedPreferences("FlexPlanPrefs", Context.MODE_PRIVATE)
-            prefs.edit().remove("LoggedInUserEmail").apply()
+            prefsManager.clearSession()
 
             val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

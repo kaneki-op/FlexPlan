@@ -70,7 +70,8 @@
                         app:boxStrokeColor="@color/wisteria"
                         app:hintTextColor="@color/theme_accent"
                         app:startIconDrawable="@android:drawable/ic_dialog_email"
-                        app:startIconTint="@color/wisteria">
+                        app:startIconTint="@color/wisteria"
+                        app:errorEnabled="true">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etEmail"
@@ -85,7 +86,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="8dp"
                         android:hint="Password"
                         android:textColorHint="@color/wisteria"
                         app:boxStrokeColor="@color/wisteria"
@@ -93,7 +94,8 @@
                         app:endIconTint="@color/wisteria"
                         app:hintTextColor="@color/theme_accent"
                         app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
-                        app:startIconTint="@color/wisteria">
+                        app:startIconTint="@color/wisteria"
+                        app:errorEnabled="true">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etPassword"
@@ -107,7 +109,7 @@
                         android:id="@+id/btnLogin"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
-                        android:layout_marginTop="32dp"
+                        android:layout_marginTop="16dp"
                         android:backgroundTint="@color/theme_accent"
                         android:text="Login"
                         android:textAllCaps="false"

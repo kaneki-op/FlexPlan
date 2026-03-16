@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.example.flexplan.model.Task
 import com.example.flexplan.model.User
+import org.mindrot.jbcrypt.BCrypt
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -84,10 +85,13 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     fun registerUser(user: User): Long {
         val db = this.writableDatabase
+        // Hash the password before saving
+        val hashedPassword = BCrypt.hashpw(user.password, BCrypt.gensalt())
+        
         val contentValues = ContentValues().apply {
             put(COL_NAME, user.name)
             put(COL_EMAIL, user.email)
-            put(COL_PASSWORD, user.password)
+            put(COL_PASSWORD, hashedPassword)
             put(COL_AGE, user.age)
         }
         val result = db.insert(TABLE_USERS, null, contentValues)
@@ -98,13 +102,23 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     fun checkUser(email: String, password: String): Boolean {
         val db = this.readableDatabase
         val cursor = db.rawQuery(
-            "SELECT * FROM $TABLE_USERS WHERE $COL_EMAIL=? AND $COL_PASSWORD=?",
-            arrayOf(email, password)
+            "SELECT $COL_PASSWORD FROM $TABLE_USERS WHERE $COL_EMAIL=?",
+            arrayOf(email)
         )
-        val exists = cursor.count > 0
+        
+        var isValid = false
+        if (cursor.moveToFirst()) {
+            val storedHash = cursor.getString(0)
+            try {
+                isValid = BCrypt.checkpw(password, storedHash)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        
         cursor.close()
         db.close()
-        return exists
+        return isValid
     }
 
     fun getUserByEmail(email: String): User? {
@@ -158,12 +172,12 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     fun isTimeTaken(userId: Int, checkTimeStr: String): Boolean {
         val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-        val checkDate = sdf.parse(checkTimeStr) ?: return false
+        val checkDate = try { sdf.parse(checkTimeStr) } catch (e: Exception) { null } ?: return false
         
         val tasks = getTasksByUserId(userId)
         for (task in tasks) {
             if (task.status == "pending") {
-                val startTime = sdf.parse(task.time) ?: continue
+                val startTime = try { sdf.parse(task.time) } catch (e: Exception) { null } ?: continue
                 val endTimeCalendar = Calendar.getInstance().apply {
                     time = startTime
                     add(Calendar.MINUTE, task.durationMinutes)
@@ -262,11 +276,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     fun shiftFutureTasks(userId: Int, fromTime: String, shiftMinutes: Int) {
         val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
         val tasks = getTasksByUserId(userId)
-        val startTime = sdf.parse(fromTime) ?: return
+        val startTime = try { sdf.parse(fromTime) } catch (e: Exception) { null } ?: return
 
         for (task in tasks) {
             if (task.status == "pending") {
-                val taskTime = sdf.parse(task.time) ?: continue
+                val taskTime = try { sdf.parse(task.time) } catch (e: Exception) { null } ?: continue
                 if (taskTime.after(startTime)) {
                     val calendar = Calendar.getInstance()
                     calendar.time = taskTime

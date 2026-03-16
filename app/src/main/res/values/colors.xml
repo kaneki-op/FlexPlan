@@ -39,4 +39,10 @@
     <color name="gradient_start">@color/splash_grad_start</color>
     <color name="gradient_center">@color/splash_grad_center</color>
     <color name="gradient_end">@color/splash_grad_end</color>
+
+    <!-- Chip Colors -->
+    <color name="chip_checked_bg">@color/theme_accent</color>
+    <color name="chip_unchecked_bg">@color/theme_surface</color>
+    <color name="chip_checked_text">@color/theme_bg</color>
+    <color name="chip_unchecked_text">@color/white</color>
 </resources>

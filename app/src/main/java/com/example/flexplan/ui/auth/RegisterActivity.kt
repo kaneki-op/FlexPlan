@@ -2,6 +2,7 @@ package com.example.flexplan.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Patterns
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -10,6 +11,7 @@ import com.example.flexplan.R
 import com.example.flexplan.data.DatabaseHelper
 import com.example.flexplan.model.User
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -20,6 +22,11 @@ class RegisterActivity : AppCompatActivity() {
         setContentView(R.layout.activity_register)
 
         db = DatabaseHelper(this)
+
+        val tilName = findViewById<TextInputLayout>(R.id.tilName)
+        val tilEmail = findViewById<TextInputLayout>(R.id.tilEmail)
+        val tilPassword = findViewById<TextInputLayout>(R.id.tilPassword)
+        val tilConfirmPassword = findViewById<TextInputLayout>(R.id.tilConfirmPassword)
 
         val etName = findViewById<TextInputEditText>(R.id.etName)
         val etEmail = findViewById<TextInputEditText>(R.id.etEmail)
@@ -34,26 +41,60 @@ class RegisterActivity : AppCompatActivity() {
             val password = etPassword.text.toString().trim()
             val confirmPassword = etConfirmPassword.text.toString().trim()
 
-            if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+            // Reset errors
+            tilName.error = null
+            tilEmail.error = null
+            tilPassword.error = null
+            tilConfirmPassword.error = null
+
+            var isValid = true
+
+            if (name.isEmpty()) {
+                tilName.error = "Name is required"
+                isValid = false
             }
 
-            if (password != confirmPassword) {
-                Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+            if (email.isEmpty()) {
+                tilEmail.error = "Email is required"
+                isValid = false
+            } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                tilEmail.error = "Please enter a valid email address"
+                isValid = false
             }
+
+            if (password.isEmpty()) {
+                tilPassword.error = "Password is required"
+                isValid = false
+            } else if (password.length < 8) {
+                tilPassword.error = "Password must be at least 8 characters"
+                isValid = false
+            }
+
+            if (confirmPassword.isEmpty()) {
+                tilConfirmPassword.error = "Please confirm your password"
+                isValid = false
+            } else if (password != confirmPassword) {
+                tilConfirmPassword.error = "Passwords do not match"
+                isValid = false
+            }
+
+            if (!isValid) return@setOnClickListener
 
             // Create user and save to DB
-            val user = User(name = name, email = email, password = password, age = 0)
-            val result = db.registerUser(user)
+            try {
+                val user = User(name = name, email = email, password = password, age = 0)
+                val result = db.registerUser(user)
 
-            if (result != -1L) {
-                Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
-                startActivity(Intent(this, LoginActivity::class.java))
-                finish()
-            } else {
-                Toast.makeText(this, "Registration failed (User might already exist)", Toast.LENGTH_SHORT).show()
+                if (result != -1L) {
+                    Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
+                } else {
+                    tilEmail.error = "User with this email might already exist"
+                    Toast.makeText(this, "Registration failed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this, "Database error: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
 

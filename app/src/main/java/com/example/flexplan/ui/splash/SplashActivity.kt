@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat
 import com.example.flexplan.R
 import com.example.flexplan.ui.auth.LoginActivity
 import com.example.flexplan.ui.home.HomeActivity
+import com.example.flexplan.utils.PrefsManager
 
 class SplashActivity : AppCompatActivity() {
 
@@ -109,8 +110,8 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun proceedToNextScreen() {
-        val prefs = getSharedPreferences("FlexPlanPrefs", Context.MODE_PRIVATE)
-        val savedEmail = prefs.getString("LoggedInUserEmail", null)
+        val prefsManager = PrefsManager(this)
+        val savedEmail = prefsManager.getUserEmail()
         if (savedEmail != null) {
             startActivity(Intent(this, HomeActivity::class.java).putExtra("USER_EMAIL", savedEmail))
         } else {
