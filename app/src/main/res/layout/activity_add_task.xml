@@ -74,6 +74,30 @@
                             android:textColor="@color/white" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Date Selection Field -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilTaskDate"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:hint="Plan Date"
+                        android:textColorHint="@color/text_gray"
+                        app:boxStrokeColor="@color/theme_primary"
+                        app:hintTextColor="@color/theme_accent"
+                        app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
+                        app:startIconTint="@color/theme_primary">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etTaskDate"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:focusable="false"
+                            android:clickable="true"
+                            android:textColor="@color/white" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilTaskTime"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -91,7 +115,7 @@
                             android:id="@+id/etTaskTime"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="time"
+                            android:inputType="none"
                             android:focusable="false"
                             android:clickable="true"
                             android:textColor="@color/white" />

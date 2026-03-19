@@ -43,7 +43,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:text="Tasks"
+                    android:text="Days Planner"
                     android:textColor="@color/white"
                     android:textSize="20sp"
                     android:textStyle="bold"
@@ -51,23 +51,34 @@
                     app:layout_constraintStart_toEndOf="@id/btnBack"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <ImageButton
-                    android:id="@+id/btnFilter"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_menu_sort_by_size"
+                <!-- Today Button -->
+                <Button
+                    android:id="@+id/btnToday"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Today"
+                    android:textColor="@color/theme_accent"
+                    android:textSize="14sp"
+                    android:textAllCaps="false"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:tint="@color/white"
-                    android:contentDescription="Filter" />
+                    app:layout_constraintTop_toTopOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Filter Chips -->
+    <!-- Horizontal Day Selector -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvDaySelector"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="12dp"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout" />
+
+    <!-- Filter Chips (Today, Completed, etc.) -->
     <HorizontalScrollView
         android:id="@+id/chipGroupScroll"
         android:layout_width="match_parent"
@@ -75,7 +86,7 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="8dp"
         android:scrollbars="none"
-        app:layout_constraintTop_toBottomOf="@id/appBarLayout">
+        app:layout_constraintTop_toBottomOf="@id/rvDaySelector">
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chipGroupFilters"
@@ -90,13 +101,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="All" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipToday"
-                style="@style/CustomChipStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Today" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipCompleted"
@@ -115,7 +119,7 @@
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
-    <!-- RecyclerView -->
+    <!-- RecyclerView for Tasks -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvTasks"
         android:layout_width="match_parent"
@@ -140,7 +144,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No tasks yet."
+            android:text="No plans for this day."
             android:textColor="@color/white"
             android:textStyle="bold"
             android:textSize="20sp" />
@@ -149,7 +153,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Start planning your productive day!"
+            android:text="Tap '+' to schedule something!"
             android:textColor="@color/text_gray"
             android:textSize="14sp" />
     </LinearLayout>
@@ -178,7 +182,7 @@
             app:elevation="0dp" />
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- FAB (FIXED ELEVATION TO SHOW ABOVE MENU) -->
+    <!-- FAB -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddTask"
         android:layout_width="wrap_content"

@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.ContextThemeWrapper
 import android.view.View
 import android.view.WindowManager
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -33,11 +34,15 @@ class TasksActivity : AppCompatActivity() {
 
     private lateinit var db: DatabaseHelper
     private lateinit var taskAdapter: TaskAdapter
+    private lateinit var daySelectorAdapter: DaySelectorAdapter
+    
     private var userEmail: String = ""
     private var currentUserId: Int = -1
     private var currentFilter: String = "All"
+    private var selectedDateStr: String = ""
 
     private lateinit var rvTasks: RecyclerView
+    private lateinit var rvDaySelector: RecyclerView
     private lateinit var layoutEmpty: LinearLayout
     private lateinit var chipGroupFilters: ChipGroup
 
@@ -61,37 +66,46 @@ class TasksActivity : AppCompatActivity() {
 
         // UI References
         rvTasks = findViewById(R.id.rvTasks)
+        rvDaySelector = findViewById(R.id.rvDaySelector)
         layoutEmpty = findViewById(R.id.layoutEmpty)
         chipGroupFilters = findViewById(R.id.chipGroupFilters)
         val btnBack = findViewById<ImageButton>(R.id.btnBack)
-        val btnFilter = findViewById<ImageButton>(R.id.btnFilter)
+        val btnToday = findViewById<Button>(R.id.btnToday)
         val fabAddTask = findViewById<FloatingActionButton>(R.id.fabAddTask)
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
-        // 1. RecyclerView Setup
+        // 1. Initialize Date
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        selectedDateStr = sdf.format(Date())
+
+        // 2. Day Selector Setup
+        setupDaySelector()
+
+        // 3. Task RecyclerView Setup
         taskAdapter = TaskAdapter(
             tasks = emptyList(),
-            useSummaryLayout = false, // Use full layout for Tasks page
-            onTaskClick = { task ->
-                toggleTaskCompletion(task)
-            },
-            onTaskLongClick = { task ->
-                showDeleteDialog(task)
-            }
+            useSummaryLayout = false,
+            onTaskClick = { task -> toggleTaskCompletion(task) },
+            onTaskLongClick = { task -> showDeleteDialog(task) }
         )
         rvTasks.layoutManager = LinearLayoutManager(this)
         rvTasks.adapter = taskAdapter
 
-        // 2. Filter Chip Logic
+        // 4. Filter Chip Logic
         setupFilters()
 
-        // 3. Navigation Listeners
+        // 5. Navigation Listeners
         btnBack.setOnClickListener { finish() }
         
-        btnFilter.setOnClickListener {
-            Toast.makeText(this, "Sorting options coming soon!", Toast.LENGTH_SHORT).show()
+        btnToday.setOnClickListener {
+            val todayStr = sdf.format(Date())
+            if (selectedDateStr != todayStr) {
+                selectedDateStr = todayStr
+                setupDaySelector() 
+                loadTasks()
+            }
         }
-
+        
         fabAddTask.setOnClickListener {
             if (userEmail == "guest@flexplan.com") {
                 Toast.makeText(this, "Please log in to add tasks!", Toast.LENGTH_SHORT).show()
@@ -100,7 +114,7 @@ class TasksActivity : AppCompatActivity() {
             }
         }
 
-        // 4. Bottom Navigation Setup
+        // 6. Bottom Navigation Setup
         bottomNav.selectedItemId = R.id.nav_tasks
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -131,12 +145,36 @@ class TasksActivity : AppCompatActivity() {
         loadTasks()
     }
 
+    private fun setupDaySelector() {
+        val daysList = mutableListOf<Date>()
+        val calendar = Calendar.getInstance()
+        // Add 30 days starting from today
+        for (i in 0 until 30) {
+            daysList.add(calendar.time)
+            calendar.add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        daySelectorAdapter = DaySelectorAdapter(daysList, selectedDateStr) { date ->
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            selectedDateStr = sdf.format(date)
+            loadTasks()
+        }
+        rvDaySelector.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        rvDaySelector.adapter = daySelectorAdapter
+        
+        // Auto-scroll to selected day
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val selectedIndex = daysList.indexOfFirst { sdf.format(it) == selectedDateStr }
+        if (selectedIndex != -1) {
+            rvDaySelector.scrollToPosition(selectedIndex)
+        }
+    }
+
     private fun setupFilters() {
         chipGroupFilters.setOnCheckedStateChangeListener { _, checkedIds ->
             if (checkedIds.isNotEmpty()) {
                 currentFilter = when (checkedIds[0]) {
                     R.id.chipAll -> "All"
-                    R.id.chipToday -> "Today"
                     R.id.chipCompleted -> "Completed"
                     R.id.chipPending -> "Pending"
                     else -> "All"
@@ -144,7 +182,6 @@ class TasksActivity : AppCompatActivity() {
                 loadTasks()
             }
         }
-        // Default selection
         chipGroupFilters.check(R.id.chipAll)
     }
 
@@ -157,15 +194,13 @@ class TasksActivity : AppCompatActivity() {
 
         val allTasks = db.getTasksByUserId(currentUserId)
         
-        // Filtering Logic
-        val filteredList = when (currentFilter) {
-            "Today" -> {
-                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                allTasks.filter { it.taskDate == today }
+        // Filter by SELECTED DATE first, then by status
+        val filteredList = allTasks.filter { it.taskDate == selectedDateStr }.filter { 
+            when (currentFilter) {
+                "Completed" -> it.status == "completed"
+                "Pending" -> it.status == "pending"
+                else -> true // "All"
             }
-            "Completed" -> allTasks.filter { it.status == "completed" }
-            "Pending" -> allTasks.filter { it.status == "pending" }
-            else -> allTasks // "All"
         }
 
         // Update UI
@@ -205,12 +240,12 @@ class TasksActivity : AppCompatActivity() {
 
     private fun showDeleteDialog(task: Task) {
         val dialog = AlertDialog.Builder(ContextThemeWrapper(this, R.style.CustomDialogTheme))
-            .setTitle("Delete Task")
+            .setTitle("Delete Plan?")
             .setMessage("Are you sure you want to delete '${task.title}'?")
             .setPositiveButton("Delete") { _, _ ->
                 db.deleteTask(task.id!!)
                 loadTasks()
-                Toast.makeText(this, "Task deleted", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Plan deleted", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .create()

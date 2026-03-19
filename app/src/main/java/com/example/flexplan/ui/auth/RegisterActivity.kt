@@ -49,8 +49,15 @@ class RegisterActivity : AppCompatActivity() {
 
             var isValid = true
 
+            // Name Validation: Required and must contain only letters and spaces, at least 2 characters
             if (name.isEmpty()) {
                 tilName.error = "Name is required"
+                isValid = false
+            } else if (!name.matches(Regex("^[a-zA-Z\\s]+$"))) {
+                tilName.error = "Name must contain only letters and spaces"
+                isValid = false
+            } else if (name.length < 2) {
+                tilName.error = "Name must be at least 2 characters"
                 isValid = false
             }
 

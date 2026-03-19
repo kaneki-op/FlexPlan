@@ -47,7 +47,6 @@ class AnalyticsActivity : AppCompatActivity() {
         val rvPerformance = findViewById<RecyclerView>(R.id.rvRecentPerformance)
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
-        // Setup performance list - FIXED CONSTRUCTOR
         performanceAdapter = TaskAdapter(
             tasks = emptyList(),
             useSummaryLayout = true, 
@@ -99,36 +98,50 @@ class AnalyticsActivity : AppCompatActivity() {
             val total = tasks.size
             val doneCount = completedTasks.size
             
-            // 1. Success Rate
+            // 1. Success Rate (Overall)
             if (total > 0) {
                 val rate = (doneCount.toFloat() / total.toFloat() * 100).toInt()
                 tvRate.text = "$rate%"
                 pb.progress = rate
+            } else {
+                tvRate.text = "0%"
+                pb.progress = 0
             }
 
-            // 2. Counts
+            // 2. Total Tasks Completed
             tvDone.text = doneCount.toString()
 
-            // 3. Average Delay
+            // 3. Average Delay Calculation
             if (doneCount > 0) {
                 val totalDelay = completedTasks.sumOf { it.delayMinutes }
                 val avg = totalDelay / doneCount
                 tvDelay.text = "${avg}m"
 
-                // 4. Productivity Level Logic
+                // 4. Productivity Level Logic based on delay
                 tvLevel.text = when {
-                    avg <= 0 -> "Highly Proactive"
+                    avg <= 5 -> "Highly Proactive"
                     avg <= 15 -> "Consistent"
                     avg <= 45 -> "Needs Focus"
                     else -> "Procrastinating"
                 }
             } else {
                 tvDelay.text = "0m"
-                tvLevel.text = "No data yet"
+                tvLevel.text = if (total > 0) "Starting Journey" else "No data yet"
             }
 
-            // 5. List recent 5
+            // 5. List recent 5 completed tasks (regardless of date)
             performanceAdapter.updateTasks(completedTasks.takeLast(5).reversed())
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh data every time user returns to analytics
+        val tvSuccessRate = findViewById<TextView>(R.id.tvSuccessRate)
+        val progressBar = findViewById<LinearProgressIndicator>(R.id.analyticsProgressBar)
+        val tvLevel = findViewById<TextView>(R.id.tvProductivityLevel)
+        val tvTotalDone = findViewById<TextView>(R.id.tvTotalDone)
+        val tvAvgDelay = findViewById<TextView>(R.id.tvAvgDelay)
+        loadAnalyticsData(tvSuccessRate, progressBar, tvLevel, tvTotalDone, tvAvgDelay)
     }
 }

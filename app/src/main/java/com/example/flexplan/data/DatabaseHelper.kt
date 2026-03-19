@@ -162,7 +162,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COL_TASK_TIME, task.time)
             put(COL_DURATION, task.durationMinutes)
             put(COL_TASK_STATUS, task.status)
-            put(COL_TASK_DATE, SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()))
+            put(COL_TASK_DATE, task.taskDate ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()))
             put(COL_AUTO_ADJUSTED, task.autoAdjusted)
         }
         val result = db.insert(TABLE_TASKS, null, contentValues)
