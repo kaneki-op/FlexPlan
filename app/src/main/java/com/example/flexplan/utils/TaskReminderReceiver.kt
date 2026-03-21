@@ -21,31 +21,51 @@ class TaskReminderReceiver : BroadcastReceiver() {
 
         when (action) {
             "com.example.flexplan.ACTION_STOP_ALARM" -> {
-                // 1. Just stop the sound
                 context.stopService(Intent(context, AlarmService::class.java))
                 Toast.makeText(context, "Alarm Silenced", Toast.LENGTH_SHORT).show()
             }
 
             "com.example.flexplan.ACTION_TASK_DONE" -> {
-                // 2. Stop sound AND mark task as done
                 context.stopService(Intent(context, AlarmService::class.java))
                 if (taskId != -1) {
                     val db = DatabaseHelper(context)
-                    val nowStr = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
-                    db.updateTaskCompletion(taskId, "completed", nowStr, 0)
+                    val task = db.getTaskById(taskId)
                     
-                    // DISMISS the current task notification
-                    notificationManager.cancel(taskId)
-                    
-                    if (userEmail.isNotEmpty()) {
-                        TaskNotificationManager.updateUpcomingTaskNotification(context, userEmail)
+                    if (task != null) {
+                        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+                        val nowStr = sdf.format(Date())
+                        var delay = 0
+                        
+                        try {
+                            val scheduledDate = sdf.parse(task.time)
+                            val actualDate = sdf.parse(nowStr)
+                            if (scheduledDate != null && actualDate != null) {
+                                val diffFromStartMinutes = (actualDate.time - scheduledDate.time) / (60 * 1000)
+                                delay = (diffFromStartMinutes - task.durationMinutes).toInt()
+                                // No longer floor at 0 - allow negative numbers for finishing early!
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
+                        db.updateTaskCompletion(taskId, "completed", nowStr, delay)
+                        notificationManager.cancel(taskId)
+                        
+                        if (userEmail.isNotEmpty()) {
+                            TaskNotificationManager.updateUpcomingTaskNotification(context, userEmail)
+                        }
+                        
+                        val msg = when {
+                            delay > 0 -> "Completed with ${delay}m delay"
+                            delay < 0 -> "Completed ${-delay}m early! Great job!"
+                            else -> "Completed exactly on time!"
+                        }
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                     }
-                    Toast.makeText(context, "Task '$taskTitle' completed!", Toast.LENGTH_SHORT).show()
                 }
             }
 
             "com.example.flexplan.ACTION_TASK_REMINDER" -> {
-                // 3. Start the alarm sound and show notification
                 val serviceIntent = Intent(context, AlarmService::class.java)
                 context.startService(serviceIntent)
                 TaskNotificationManager.showActiveAlarmNotification(context, taskId, taskTitle, userEmail)

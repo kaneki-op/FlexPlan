@@ -6,78 +6,84 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
     app:cardBackgroundColor="@color/theme_surface"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="0dp"
-    app:strokeColor="#1AFFFFFF"
-    app:strokeWidth="1dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <!-- Modern Time & Duration Badge -->
-        <LinearLayout
-            android:id="@+id/timeBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#1A00E5FF"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:orientation="horizontal"
+        <ImageView
+            android:id="@+id/ivStatusIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_checkbox_unselected"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <TextView
-                android:id="@+id/tvTaskTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="10:00 AM"
-                android:textColor="@color/secondary_color"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvDurationLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" • "
-                android:textColor="@color/secondary_color"
-                android:textSize="11sp" />
-
-            <TextView
-                android:id="@+id/tvTaskDuration"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="60m"
-                android:textColor="@color/secondary_color"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="Status" />
 
         <TextView
             android:id="@+id/tvTaskTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
-            android:text="Study Logic"
+            android:layout_marginStart="16dp"
+            android:text="Task Title"
             android:textColor="@color/white"
-            android:textSize="17sp"
-            android:fontFamily="sans-serif-medium"
-            app:layout_constraintEnd_toStartOf="@id/ivStatusIcon"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/timeBadge" />
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/tvTaskTime"
+            app:layout_constraintStart_toEndOf="@id/ivStatusIcon"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/ivStatusIcon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_checkbox_unselected"
-            app:layout_constraintBottom_toBottomOf="parent"
+        <TextView
+            android:id="@+id/tvTaskTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="10:00 AM"
+            android:textColor="@color/text_gray"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="@id/tvTaskTitle"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:contentDescription="Status" />
+            app:layout_constraintTop_toTopOf="@id/tvTaskTitle" />
+
+        <TextView
+            android:id="@+id/tvAdjusted"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="• Adjusted"
+            android:textColor="@color/theme_accent"
+            android:textSize="10sp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="@id/tvTaskTitle"
+            app:layout_constraintTop_toBottomOf="@id/tvTaskTitle" />
+
+        <TextView
+            android:id="@+id/tvFrozenLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="• Frozen"
+            android:textColor="@color/text_gray"
+            android:textSize="10sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/tvAdjusted"
+            app:layout_constraintStart_toEndOf="@id/tvAdjusted"
+            app:layout_constraintTop_toTopOf="@id/tvAdjusted" />
+
+        <!-- Recurring Icon -->
+        <ImageView
+            android:id="@+id/ivRecurringIcon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginStart="8dp"
+            android:src="@android:drawable/stat_notify_sync"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/tvTaskTitle"
+            app:layout_constraintStart_toEndOf="@id/tvTaskTitle"
+            app:layout_constraintTop_toTopOf="@id/tvTaskTitle"
+            app:tint="@color/theme_accent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

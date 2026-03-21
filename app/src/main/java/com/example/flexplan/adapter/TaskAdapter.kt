@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.flexplan.R
 import com.example.flexplan.model.Task
 import com.google.android.material.card.MaterialCardView
+import java.text.SimpleDateFormat
+import java.util.*
 
 class TaskAdapter(
     private var tasks: List<Task>,
@@ -28,6 +30,8 @@ class TaskAdapter(
         val tvDesc: TextView? = view.findViewById(R.id.tvTaskDesc)
         val tvAdjusted: TextView? = view.findViewById(R.id.tvAdjusted)
         val ivStatus: ImageView = view.findViewById(R.id.ivStatusIcon)
+        val tvFrozen: TextView? = view.findViewById(R.id.tvFrozenLabel)
+        val tvOptimized: TextView? = view.findViewById(R.id.tvOptimizedLabel)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
@@ -41,57 +45,73 @@ class TaskAdapter(
         holder.tvTitle.text = task.title
         holder.tvTime.text = task.time
         
-        // Handle optional fields
         holder.tvDuration?.text = " • ${task.durationMinutes}m"
         holder.tvDesc?.text = task.description
         
-        // Show "FlexPlan Adjusted" label if the task was auto-adjusted
         if (task.autoAdjusted == 1) {
             holder.tvAdjusted?.visibility = View.VISIBLE
         } else {
             holder.tvAdjusted?.visibility = View.GONE
         }
 
-        val context = holder.itemView.context
-        val boxColor = ContextCompat.getColor(context, R.color.theme_surface)
-        val accentColor = ContextCompat.getColor(context, R.color.theme_accent)
-        val wisteriaColor = ContextCompat.getColor(context, R.color.wisteria)
-        val whiteColor = ContextCompat.getColor(context, R.color.white)
-
-        if (task.status == "completed") {
-            holder.ivStatus.setImageResource(R.drawable.ic_check_done)
-            holder.ivStatus.setColorFilter(accentColor)
-            holder.ivStatus.alpha = 1.0f
-            
-            holder.card.setCardBackgroundColor(boxColor)
-            holder.card.strokeColor = wisteriaColor
-            
-            holder.tvTitle.paintFlags = holder.tvTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-            holder.tvTitle.alpha = 0.5f
-            holder.tvTime.alpha = 0.5f
-            holder.tvDuration?.alpha = 0.5f
-            holder.tvDesc?.alpha = 0.5f
-            holder.card.alpha = 0.8f
+        // SMART OPTIMIZED LABEL
+        if (task.isOptimized == 1) {
+            holder.tvOptimized?.visibility = View.VISIBLE
         } else {
-            holder.ivStatus.setImageResource(R.drawable.ic_checkbox_unselected)
-            holder.ivStatus.setColorFilter(wisteriaColor)
-            holder.ivStatus.alpha = 0.6f
-            
-            holder.card.setCardBackgroundColor(boxColor)
-            holder.card.strokeColor = Color.parseColor("#1AFFFFFF")
-            
-            holder.tvTitle.paintFlags = holder.tvTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
-            holder.tvTitle.alpha = 1.0f
-            holder.tvTime.alpha = 1.0f
-            holder.tvDuration?.alpha = 1.0f
-            holder.tvDesc?.alpha = 1.0f
-            holder.card.alpha = 1.0f
+            holder.tvOptimized?.visibility = View.GONE
         }
 
-        holder.itemView.setOnClickListener { onTaskClick(task) }
+        val context = holder.itemView.context
+        
+        val isFutureTask = isTaskInFuture(task)
+        val isLocked = isFutureTask && task.status != "completed"
+
+        if (isLocked) {
+            holder.card.alpha = 0.5f
+            holder.ivStatus.setImageResource(R.drawable.ic_lock)
+            holder.ivStatus.setColorFilter(Color.GRAY)
+            holder.tvFrozen?.visibility = View.VISIBLE
+        } else {
+            holder.card.alpha = 1.0f
+            holder.tvFrozen?.visibility = View.GONE
+            if (task.status == "completed") {
+                holder.ivStatus.setImageResource(R.drawable.ic_check_done)
+                holder.ivStatus.setColorFilter(ContextCompat.getColor(context, R.color.theme_accent))
+            } else {
+                holder.ivStatus.setImageResource(R.drawable.ic_checkbox_unselected)
+                holder.ivStatus.setColorFilter(ContextCompat.getColor(context, R.color.wisteria))
+            }
+        }
+
+        if (task.status == "completed") {
+            holder.tvTitle.paintFlags = holder.tvTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+            holder.tvTitle.alpha = 0.5f
+        } else {
+            holder.tvTitle.paintFlags = holder.tvTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+            holder.tvTitle.alpha = 1.0f
+        }
+
+        holder.itemView.setOnClickListener {
+            if (isLocked) {
+                android.widget.Toast.makeText(context, "Plan is frozen until scheduled time!", android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                onTaskClick(task)
+            }
+        }
+        
         holder.itemView.setOnLongClickListener {
             onTaskLongClick(task)
             true
+        }
+    }
+
+    private fun isTaskInFuture(task: Task): Boolean {
+        return try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd hh:mm a", Locale.getDefault())
+            val taskDateTime = sdf.parse("${task.taskDate} ${task.time}")
+            taskDateTime?.after(Date()) ?: false
+        } catch (e: Exception) {
+            false
         }
     }
 

@@ -46,23 +46,59 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Adjusted Label -->
-        <TextView
-            android:id="@+id/tvAdjusted"
-            android:layout_width="wrap_content"
+        <!-- Labels Row -->
+        <LinearLayout
+            android:id="@+id/labelsRow"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:background="#1AFFD166"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="2dp"
-            android:text="FlexPlan Adjusted"
-            android:textColor="@color/theme_accent"
-            android:textSize="9sp"
-            android:textStyle="bold"
-            android:visibility="gone"
+            android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="@id/timeBadge"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/timeBadge"
-            app:layout_constraintTop_toTopOf="@id/timeBadge" />
+            app:layout_constraintTop_toTopOf="@id/timeBadge">
+
+            <TextView
+                android:id="@+id/tvAdjusted"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#1AFFD166"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:text="ADJUSTED"
+                android:textColor="@color/theme_accent"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvOptimizedLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:background="#1A32D74B"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:text="SMART OPTIMIZED"
+                android:textColor="@color/success_green"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvFrozenLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:background="#1A808080"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:text="FROZEN"
+                android:textColor="@color/text_gray"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvTaskTitle"

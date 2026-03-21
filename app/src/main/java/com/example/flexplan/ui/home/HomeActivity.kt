@@ -134,15 +134,7 @@ class HomeActivity : AppCompatActivity() {
             },
             onTaskLongClick = { task ->
                 if (!isGuest) {
-                    val dialog = AlertDialog.Builder(ContextThemeWrapper(this, R.style.CustomDialogTheme))
-                        .setTitle("Delete Plan?")
-                        .setMessage("Remove '${task.title}'?")
-                        .setPositiveButton("Delete") { _, _ ->
-                            db.deleteTask(task.id!!)
-                            refreshData()
-                        }
-                        .setNegativeButton("Cancel", null)
-                        .show()
+                    showDeleteDialog(task)
                 }
             }
         )
@@ -186,6 +178,33 @@ class HomeActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
+
+    private fun showDeleteDialog(task: Task) {
+        val dialog = AlertDialog.Builder(ContextThemeWrapper(this, R.style.CustomDialogTheme))
+            .setTitle("Delete Plan?")
+            .setMessage("What would you like to do with '${task.title}'?")
+            .setPositiveButton(if (task.isRecurring == 1) "Delete This Day" else "Delete") { _, _ ->
+                db.deleteTask(task.id!!)
+                refreshData()
+                Toast.makeText(this, "Plan deleted", Toast.LENGTH_SHORT).show()
+            }
+            
+        if (task.isRecurring == 1) {
+            dialog.setNeutralButton("Delete Series") { _, _ ->
+                db.deleteRecurringSeries(currentUserId, task.title, task.time)
+                refreshData()
+                Toast.makeText(this, "Entire series deleted", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        dialog.setNegativeButton("Cancel", null)
+        
+        val alert = dialog.create()
+        alert.show()
+        alert.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#FFD166"))
+        alert.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(Color.parseColor("#FF453A"))
+        alert.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#BC96E6"))
     }
 
     private fun showAdjustmentDialog(fromTime: String, delay: Int) {

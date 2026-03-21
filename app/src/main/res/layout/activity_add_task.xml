@@ -19,9 +19,9 @@
                 android:id="@+id/btnBack"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_revert"
+                android:src="@drawable/ic_back_final"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:tint="@color/white"
@@ -31,10 +31,10 @@
                 android:id="@+id/tvAddTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="16dp"
                 android:text="New Plan"
                 android:textColor="@color/white"
-                android:textSize="32sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/btnBack" />
@@ -42,7 +42,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="24dp"
                 app:cardBackgroundColor="@color/theme_surface"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
@@ -71,10 +71,38 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="textCapSentences"
-                            android:textColor="@color/white" />
+                            android:textColor="@color/white"
+                            android:textColorHint="@color/text_gray" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Date Selection Field -->
+                    <!-- Improved Task Type UI -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Select Category"
+                        android:textColor="@color/theme_accent"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="4dp"
+                        app:cardBackgroundColor="@android:color/transparent"
+                        app:cardCornerRadius="8dp"
+                        app:strokeColor="@color/theme_primary"
+                        app:strokeWidth="1dp">
+
+                        <Spinner
+                            android:id="@+id/spinnerTaskType"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:backgroundTint="@color/theme_accent"
+                            android:paddingHorizontal="12dp"
+                            android:popupBackground="@color/theme_surface" />
+                    </com.google.android.material.card.MaterialCardView>
+
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilTaskDate"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -85,8 +113,8 @@
                         android:textColorHint="@color/text_gray"
                         app:boxStrokeColor="@color/theme_primary"
                         app:hintTextColor="@color/theme_accent"
-                        app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
-                        app:startIconTint="@color/theme_primary">
+                        app:startIconDrawable="@drawable/ic_calendar"
+                        app:startIconTint="@color/theme_accent">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etTaskDate"
@@ -95,7 +123,8 @@
                             android:inputType="none"
                             android:focusable="false"
                             android:clickable="true"
-                            android:textColor="@color/white" />
+                            android:textColor="@color/white"
+                            android:textColorHint="@color/text_gray" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -108,8 +137,8 @@
                         android:textColorHint="@color/text_gray"
                         app:boxStrokeColor="@color/theme_primary"
                         app:hintTextColor="@color/theme_accent"
-                        app:startIconDrawable="@android:drawable/ic_menu_recent_history"
-                        app:startIconTint="@color/theme_primary">
+                        app:startIconDrawable="@drawable/ic_clock_sharp"
+                        app:startIconTint="@color/theme_accent">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etTaskTime"
@@ -118,7 +147,8 @@
                             android:inputType="none"
                             android:focusable="false"
                             android:clickable="true"
-                            android:textColor="@color/white" />
+                            android:textColor="@color/white"
+                            android:textColorHint="@color/text_gray" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -138,8 +168,18 @@
                             android:layout_height="wrap_content"
                             android:inputType="number"
                             android:text="30"
-                            android:textColor="@color/white" />
+                            android:textColor="@color/white"
+                            android:textColorHint="@color/text_gray" />
                     </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.checkbox.MaterialCheckBox
+                        android:id="@+id/cbRecurring"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Repeat Daily"
+                        android:textColor="@color/white"
+                        app:buttonTint="@color/theme_accent" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilTaskDesc"
@@ -158,7 +198,8 @@
                             android:layout_height="120dp"
                             android:gravity="top"
                             android:inputType="textMultiLine"
-                            android:textColor="@color/white" />
+                            android:textColor="@color/white"
+                            android:textColorHint="@color/text_gray" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <Button

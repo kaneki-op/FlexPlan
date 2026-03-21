@@ -11,5 +11,8 @@ data class Task(
     var completionTime: String? = null,
     var taskDate: String? = null,
     var delayMinutes: Int = 0,
-    var autoAdjusted: Int = 0
+    var autoAdjusted: Int = 0,
+    var isRecurring: Int = 0, // 0 = No, 1 = Daily
+    var taskType: String = "PERSONAL", // STUDY, WORK, HEALTH, PERSONAL
+    var isOptimized: Int = 0 // 0 = No, 1 = Yes (FlexPlan optimized)
 )

@@ -14,9 +14,8 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         private const val DATABASE_NAME = "FlexPlan.db"
-        private const val DATABASE_VERSION = 4
+        private const val DATABASE_VERSION = 6 // Incremented for Task Type & Optimization
 
-        // Users Table
         const val TABLE_USERS = "users"
         const val COL_USER_ID = "user_id"
         const val COL_NAME = "name"
@@ -25,7 +24,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COL_AGE = "age"
         const val COL_CREATED_AT = "created_at"
 
-        // Tasks Table
         const val TABLE_TASKS = "tasks"
         const val COL_TASK_ID = "task_id"
         const val COL_TASK_USER_ID = "user_id"
@@ -38,6 +36,9 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COL_TASK_DATE = "task_date"
         const val COL_DELAY_MINUTES = "delay_minutes"
         const val COL_AUTO_ADJUSTED = "auto_adjusted"
+        const val COL_IS_RECURRING = "is_recurring"
+        const val COL_TASK_TYPE = "task_type" // New
+        const val COL_IS_OPTIMIZED = "is_optimized" // New
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -61,6 +62,9 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 + COL_TASK_DATE + " TEXT, "
                 + COL_DELAY_MINUTES + " INTEGER DEFAULT 0, "
                 + COL_AUTO_ADJUSTED + " INTEGER DEFAULT 0, "
+                + COL_IS_RECURRING + " INTEGER DEFAULT 0, "
+                + COL_TASK_TYPE + " TEXT DEFAULT 'PERSONAL', "
+                + COL_IS_OPTIMIZED + " INTEGER DEFAULT 0, "
                 + "FOREIGN KEY(" + COL_TASK_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + "))")
 
         db?.execSQL(createUsersTable)
@@ -73,11 +77,12 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             db?.execSQL("ALTER TABLE $TABLE_TASKS ADD COLUMN $COL_TASK_DATE TEXT")
             db?.execSQL("ALTER TABLE $TABLE_TASKS ADD COLUMN $COL_DELAY_MINUTES INTEGER DEFAULT 0")
         }
-        if (oldVersion < 3) {
-            db?.execSQL("ALTER TABLE $TABLE_TASKS ADD COLUMN $COL_AUTO_ADJUSTED INTEGER DEFAULT 0")
-        }
-        if (oldVersion < 4) {
-            db?.execSQL("ALTER TABLE $TABLE_TASKS ADD COLUMN $COL_DURATION INTEGER DEFAULT 30")
+        if (oldVersion < 3) db?.execSQL("ALTER TABLE $TABLE_TASKS ADD COLUMN $COL_AUTO_ADJUSTED INTEGER DEFAULT 0")
+        if (oldVersion < 4) db?.execSQL("ALTER TABLE $TABLE_TASKS ADD COLUMN $COL_DURATION INTEGER DEFAULT 30")
+        if (oldVersion < 5) db?.execSQL("ALTER TABLE $TABLE_TASKS ADD COLUMN $COL_IS_RECURRING INTEGER DEFAULT 0")
+        if (oldVersion < 6) {
+            db?.execSQL("ALTER TABLE $TABLE_TASKS ADD COLUMN $COL_TASK_TYPE TEXT DEFAULT 'PERSONAL'")
+            db?.execSQL("ALTER TABLE $TABLE_TASKS ADD COLUMN $COL_IS_OPTIMIZED INTEGER DEFAULT 0")
         }
     }
 
@@ -85,9 +90,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     fun registerUser(user: User): Long {
         val db = this.writableDatabase
-        // Hash the password before saving
         val hashedPassword = BCrypt.hashpw(user.password, BCrypt.gensalt())
-        
         val contentValues = ContentValues().apply {
             put(COL_NAME, user.name)
             put(COL_EMAIL, user.email)
@@ -101,21 +104,12 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     fun checkUser(email: String, password: String): Boolean {
         val db = this.readableDatabase
-        val cursor = db.rawQuery(
-            "SELECT $COL_PASSWORD FROM $TABLE_USERS WHERE $COL_EMAIL=?",
-            arrayOf(email)
-        )
-        
+        val cursor = db.rawQuery("SELECT $COL_PASSWORD FROM $TABLE_USERS WHERE $COL_EMAIL=?", arrayOf(email))
         var isValid = false
         if (cursor.moveToFirst()) {
             val storedHash = cursor.getString(0)
-            try {
-                isValid = BCrypt.checkpw(password, storedHash)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            try { isValid = BCrypt.checkpw(password, storedHash) } catch (e: Exception) { e.printStackTrace() }
         }
-        
         cursor.close()
         db.close()
         return isValid
@@ -164,6 +158,9 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COL_TASK_STATUS, task.status)
             put(COL_TASK_DATE, task.taskDate ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()))
             put(COL_AUTO_ADJUSTED, task.autoAdjusted)
+            put(COL_IS_RECURRING, task.isRecurring)
+            put(COL_TASK_TYPE, task.taskType)
+            put(COL_IS_OPTIMIZED, task.isOptimized)
         }
         val result = db.insert(TABLE_TASKS, null, contentValues)
         db.close()
@@ -173,7 +170,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     fun isTimeTaken(userId: Int, checkTimeStr: String): Boolean {
         val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
         val checkDate = try { sdf.parse(checkTimeStr) } catch (e: Exception) { null } ?: return false
-        
         val tasks = getTasksByUserId(userId)
         for (task in tasks) {
             if (task.status == "pending") {
@@ -183,8 +179,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                     add(Calendar.MINUTE, task.durationMinutes)
                 }
                 val endTime = endTimeCalendar.time
-                
-                // If checkTime falls between task's start and end time
                 if (checkDate.equals(startTime) || (checkDate.after(startTime) && checkDate.before(endTime))) {
                     return true
                 }
@@ -203,14 +197,10 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 for (i in 1..48) {
                     calendar.add(Calendar.MINUTE, 30)
                     val nextTime = sdf.format(calendar.time)
-                    if (!isTimeTaken(userId, nextTime)) {
-                        return nextTime
-                    }
+                    if (!isTimeTaken(userId, nextTime)) return nextTime
                 }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        } catch (e: Exception) { e.printStackTrace() }
         return startTime
     }
 
@@ -218,7 +208,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         val taskList = mutableListOf<Task>()
         val db = this.readableDatabase
         val cursor = db.rawQuery("SELECT * FROM $TABLE_TASKS WHERE $COL_TASK_USER_ID=?", arrayOf(userId.toString()))
-        
         if (cursor.moveToFirst()) {
             do {
                 val task = Task(
@@ -232,22 +221,45 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                     completionTime = cursor.getString(cursor.getColumnIndexOrThrow(COL_COMPLETION_TIME)),
                     taskDate = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_DATE)),
                     delayMinutes = cursor.getInt(cursor.getColumnIndexOrThrow(COL_DELAY_MINUTES)),
-                    autoAdjusted = cursor.getInt(cursor.getColumnIndexOrThrow(COL_AUTO_ADJUSTED))
+                    autoAdjusted = cursor.getInt(cursor.getColumnIndexOrThrow(COL_AUTO_ADJUSTED)),
+                    isRecurring = cursor.getInt(cursor.getColumnIndexOrThrow(COL_IS_RECURRING)),
+                    taskType = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_TYPE)),
+                    isOptimized = cursor.getInt(cursor.getColumnIndexOrThrow(COL_IS_OPTIMIZED))
                 )
                 taskList.add(task)
             } while (cursor.moveToNext())
         }
         cursor.close()
         db.close()
-
         val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-        return taskList.sortedBy { task ->
-            try {
-                sdf.parse(task.time)
-            } catch (e: Exception) {
-                Date(0)
-            }
+        return taskList.sortedBy { task -> try { sdf.parse(task.time) } catch (e: Exception) { Date(0) } }
+    }
+
+    fun getTaskById(taskId: Int): Task? {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_TASKS WHERE $COL_TASK_ID=?", arrayOf(taskId.toString()))
+        var task: Task? = null
+        if (cursor.moveToFirst()) {
+            task = Task(
+                id = cursor.getInt(cursor.getColumnIndexOrThrow(COL_TASK_ID)),
+                userId = cursor.getInt(cursor.getColumnIndexOrThrow(COL_TASK_USER_ID)),
+                title = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_TITLE)),
+                description = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_DESC)),
+                time = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_TIME)),
+                durationMinutes = cursor.getInt(cursor.getColumnIndexOrThrow(COL_DURATION)),
+                status = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_STATUS)),
+                completionTime = cursor.getString(cursor.getColumnIndexOrThrow(COL_COMPLETION_TIME)),
+                taskDate = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_DATE)),
+                delayMinutes = cursor.getInt(cursor.getColumnIndexOrThrow(COL_DELAY_MINUTES)),
+                autoAdjusted = cursor.getInt(cursor.getColumnIndexOrThrow(COL_AUTO_ADJUSTED)),
+                isRecurring = cursor.getInt(cursor.getColumnIndexOrThrow(COL_IS_RECURRING)),
+                taskType = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_TYPE)),
+                isOptimized = cursor.getInt(cursor.getColumnIndexOrThrow(COL_IS_OPTIMIZED))
+            )
         }
+        cursor.close()
+        db.close()
+        return task
     }
 
     fun updateTaskCompletion(taskId: Int, status: String, completionTime: String?, delay: Int): Int {
@@ -273,11 +285,54 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return result
     }
 
+    fun updateTaskDuration(taskId: Int, newDuration: Int, isOptimized: Int): Int {
+        val db = this.writableDatabase
+        val contentValues = ContentValues().apply {
+            put(COL_DURATION, newDuration)
+            put(COL_IS_OPTIMIZED, isOptimized)
+        }
+        val result = db.update(TABLE_TASKS, contentValues, "$COL_TASK_ID=?", arrayOf(taskId.toString()))
+        db.close()
+        return result
+    }
+
+    fun getLast3CompletedTasksByType(userId: Int, taskType: String): List<Task> {
+        val taskList = mutableListOf<Task>()
+        val db = this.readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT * FROM $TABLE_TASKS WHERE $COL_TASK_USER_ID=? AND $COL_TASK_TYPE=? AND $COL_TASK_STATUS='completed' ORDER BY $COL_TASK_ID DESC LIMIT 3",
+            arrayOf(userId.toString(), taskType)
+        )
+        if (cursor.moveToFirst()) {
+            do {
+                val task = Task(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow(COL_TASK_ID)),
+                    userId = cursor.getInt(cursor.getColumnIndexOrThrow(COL_TASK_USER_ID)),
+                    title = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_TITLE)),
+                    description = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_DESC)),
+                    time = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_TIME)),
+                    durationMinutes = cursor.getInt(cursor.getColumnIndexOrThrow(COL_DURATION)),
+                    status = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_STATUS)),
+                    completionTime = cursor.getString(cursor.getColumnIndexOrThrow(COL_COMPLETION_TIME)),
+                    taskDate = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_DATE)),
+                    delayMinutes = cursor.getInt(cursor.getColumnIndexOrThrow(COL_DELAY_MINUTES)),
+                    autoAdjusted = cursor.getInt(cursor.getColumnIndexOrThrow(COL_AUTO_ADJUSTED)),
+                    isRecurring = cursor.getInt(cursor.getColumnIndexOrThrow(COL_IS_RECURRING)),
+                    taskType = cursor.getString(cursor.getColumnIndexOrThrow(COL_TASK_TYPE)),
+                    isOptimized = cursor.getInt(cursor.getColumnIndexOrThrow(COL_IS_OPTIMIZED))
+                )
+                taskList.add(task)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        db.close()
+        return taskList
+    }
+
     fun shiftFutureTasks(userId: Int, fromTime: String, shiftMinutes: Int) {
         val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
         val tasks = getTasksByUserId(userId)
         val startTime = try { sdf.parse(fromTime) } catch (e: Exception) { null } ?: return
-
         for (task in tasks) {
             if (task.status == "pending") {
                 val taskTime = try { sdf.parse(task.time) } catch (e: Exception) { null } ?: continue
@@ -285,8 +340,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                     val calendar = Calendar.getInstance()
                     calendar.time = taskTime
                     calendar.add(Calendar.MINUTE, shiftMinutes)
-                    val newTime = sdf.format(calendar.time)
-                    updateTaskTime(task.id!!, newTime, 1)
+                    updateTaskTime(task.id!!, sdf.format(calendar.time), 1)
                 }
             }
         }
@@ -295,6 +349,17 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     fun deleteTask(taskId: Int): Int {
         val db = this.writableDatabase
         val result = db.delete(TABLE_TASKS, "$COL_TASK_ID=?", arrayOf(taskId.toString()))
+        db.close()
+        return result
+    }
+
+    fun deleteRecurringSeries(userId: Int, title: String, time: String): Int {
+        val db = this.writableDatabase
+        val result = db.delete(
+            TABLE_TASKS,
+            "$COL_TASK_USER_ID=? AND $COL_TASK_TITLE=? AND $COL_TASK_TIME=? AND $COL_IS_RECURRING=1",
+            arrayOf(userId.toString(), title, time)
+        )
         db.close()
         return result
     }

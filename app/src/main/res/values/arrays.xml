@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="task_types">
+        <item>PERSONAL</item>
+        <item>STUDY</item>
+        <item>WORK</item>
+        <item>HEALTH</item>
+    </string-array>
+</resources>

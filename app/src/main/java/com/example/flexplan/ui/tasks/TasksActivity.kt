@@ -241,18 +241,28 @@ class TasksActivity : AppCompatActivity() {
     private fun showDeleteDialog(task: Task) {
         val dialog = AlertDialog.Builder(ContextThemeWrapper(this, R.style.CustomDialogTheme))
             .setTitle("Delete Plan?")
-            .setMessage("Are you sure you want to delete '${task.title}'?")
-            .setPositiveButton("Delete") { _, _ ->
+            .setMessage("What would you like to do with '${task.title}'?")
+            .setPositiveButton("Delete This Day") { _, _ ->
                 db.deleteTask(task.id!!)
                 loadTasks()
-                Toast.makeText(this, "Plan deleted", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Plan deleted for this day", Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("Cancel", null)
-            .create()
+            
+        if (task.isRecurring == 1) {
+            dialog.setNeutralButton("Delete Series") { _, _ ->
+                db.deleteRecurringSeries(currentUserId, task.title, task.time)
+                loadTasks()
+                Toast.makeText(this, "Entire series deleted", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        dialog.setNegativeButton("Cancel", null)
         
-        dialog.show()
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#FFD166"))
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#BC96E6"))
+        val alert = dialog.create()
+        alert.show()
+        alert.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#FFD166"))
+        alert.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(Color.parseColor("#FF453A"))
+        alert.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#BC96E6"))
     }
 
     override fun onResume() {
